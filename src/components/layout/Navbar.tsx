@@ -41,7 +41,7 @@ export const Navbar: React.FC = () => {
                 <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
                   isLight ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-sky-500/15 text-sky-400 border-sky-500/30'
                 }`}>
-                  Figma Edition
+                  Platform v2.4
                 </span>
               </div>
               <p className={`text-[11px] font-medium tracking-tight ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -132,22 +132,22 @@ export const Navbar: React.FC = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              title={`Switch to ${isLight ? 'Dark Cyberpunk' : 'Figma Light'} Mode`}
+              title={`Switch to ${isLight ? 'Dark' : 'Light'} Mode`}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
                 isLight 
-                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 shadow-sm' 
+                  ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 shadow-sm' 
                   : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800'
               }`}
             >
               {isLight ? (
                 <>
-                  <Palette className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="hidden sm:inline">Figma Light</span>
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Light Mode</span>
                 </>
               ) : (
                 <>
                   <Moon className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="hidden sm:inline">Dark Theme</span>
+                  <span className="hidden sm:inline">Dark Mode</span>
                 </>
               )}
             </button>

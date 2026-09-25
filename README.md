@@ -3,7 +3,6 @@
 > **Clean Air. Everywhere You Go.**  
 > An end-to-end geospatial environmental intelligence platform combining continuous telemetry from **VAYU Wearable Sensors**, fixed CAAQMS stations, and crowdsourced citizen incident reports with municipal enforcement workflows.
 
-[![Figma Design](https://img.shields.io/badge/Figma-UX%20Blueprint-blue?logo=figma)](https://www.figma.com/design/mN7RHx7dpyHamoa1KzPGXD?utm_source=chatgpt.com)
 [![Postman Collection](https://img.shields.io/badge/Postman-Collection%20v2.1-orange?logo=postman)](postman/VAYU_API_Collection.json)
 [![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ed?logo=docker)](docker-compose.yml)
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
@@ -126,5 +125,4 @@ docker-compose up --build
 ---
 
 ## 📄 License & Credits
-Developed as an Advanced Software Engineering (ASE) capstone project and the software intelligence backbone for the **VAYU Wearable** startup ecosystem.  
-Figma Design Blueprint: [VAYU Pollution Platform on Figma](https://www.figma.com/design/mN7RHx7dpyHamoa1KzPGXD?utm_source=chatgpt.com)
+Developed as an Advanced Software Engineering (ASE) capstone project and the software intelligence backbone for the **VAYU Wearable** startup ecosystem.

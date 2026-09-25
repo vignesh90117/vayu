@@ -82,17 +82,6 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-slate-400 mb-3 leading-relaxed">
               Designed as the software intelligence backbone for the <strong className="text-slate-300">VAYU Wearable</strong> ecosystem, submitted as an Advanced Software Engineering capstone project.
             </p>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <a 
-                href="https://www.figma.com/design/mN7RHx7dpyHamoa1KzPGXD?utm_source=chatgpt.com"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-sky-400 hover:border-sky-500/50 transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                <span>Figma UX Blueprint</span>
-              </a>
-            </div>
           </div>
 
         </div>

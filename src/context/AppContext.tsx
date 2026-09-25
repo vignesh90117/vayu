@@ -101,6 +101,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEYS.HOTSPOTS, JSON.stringify(hotspots));
   }, [hotspots]);
 
+  // Synchronize state with VAYU API Gateway (:5000) when online
+  useEffect(() => {
+    const syncWithBackend = async () => {
+      try {
+        const [sensRes, repRes, hotRes] = await Promise.all([
+          fetch('http://localhost:5000/api/v1/telemetry/nodes', { signal: AbortSignal.timeout(1200) }),
+          fetch('http://localhost:5000/api/v1/reports', { signal: AbortSignal.timeout(1200) }),
+          fetch('http://localhost:5000/api/v1/hotspots', { signal: AbortSignal.timeout(1200) }),
+        ]);
+
+        if (sensRes.ok) {
+          const json = await sensRes.json();
+          if (json.data && json.data.length > 0) setSensors(json.data);
+        }
+        if (repRes.ok) {
+          const json = await repRes.json();
+          if (json.data && json.data.length > 0) setReports(json.data);
+        }
+        if (hotRes.ok) {
+          const json = await hotRes.json();
+          if (json.data && json.data.length > 0) setHotspots(json.data);
+        }
+      } catch (err) {
+        // Backend mesh offline; smoothly using local state
+      }
+    };
+
+    syncWithBackend();
+  }, []);
+
   // Periodic subtle drift / live heartbeat for the simulated wearable when enabled
   useEffect(() => {
     if (!isSimulating) return;
@@ -165,12 +195,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setHotspots(prev => [newHotspot, ...prev]);
     }
+
+    // Fire-and-forget async sync to API Gateway
+    fetch('http://localhost:5000/api/v1/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newReportData)
+    }).catch(() => {});
   };
 
   const upvoteReport = (reportId: string) => {
     setReports(prev =>
       prev.map(r => (r.id === reportId ? { ...r, upvotes: r.upvotes + 1 } : r))
     );
+    fetch(`http://localhost:5000/api/v1/reports/${reportId}/upvote`, { method: 'POST' }).catch(() => {});
   };
 
   const updateReportStatus = (
@@ -192,6 +230,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return r;
       })
     );
+
+    // Sync status change with Authority microservice
+    fetch(`http://localhost:5000/api/v1/authority/reports/${reportId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, actionNotes: notes, assignedAgency: agency })
+    }).catch(() => {});
   };
 
   const updateSimulatedWearable = (updates: Partial<SensorReading>) => {

@@ -1,0 +1,37 @@
+{
+  "id": "vayu-environment-local",
+  "name": "VAYU Local Microservices Mesh",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "telemetry_url",
+      "value": "http://localhost:5001",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "clustering_url",
+      "value": "http://localhost:5002",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "reports_url",
+      "value": "http://localhost:5003",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "authority_url",
+      "value": "http://localhost:5004",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

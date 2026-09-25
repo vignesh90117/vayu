@@ -1,0 +1,337 @@
+{
+  "info": {
+    "_postman_id": "vayu-pollution-platform-collection-v2-4",
+    "name": "VAYU — Real-Time Pollution Intelligence Platform APIs",
+    "description": "Complete Postman test suite for the VAYU Microservices Architecture: API Gateway, Telemetry Ingestion, Hotspot Spatial Clustering, Citizen Incident Reporting, and Municipal Authority Enforcement.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - API Gateway & Health",
+      "item": [
+        {
+          "name": "Gateway Root & Route Discovery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Returns gateway routing directory and registered microservices."
+          },
+          "response": []
+        },
+        {
+          "name": "Aggregated Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Checks connectivity and operational state of all 4 downstream microservices."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Telemetry Ingestion Service (:5001)",
+      "item": [
+        {
+          "name": "List All Active Sensor Nodes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/telemetry/nodes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "telemetry", "nodes"]
+            },
+            "description": "Retrieves real-time telemetry from all VAYU wearables and reference CAAQMS stations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Sensor Node Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/telemetry/nodes/vayu-wearable-101",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "telemetry", "nodes", "vayu-wearable-101"]
+            },
+            "description": "Fetches single sensor metrics, 24-hr diurnal trend, and calibration confidence."
+          },
+          "response": []
+        },
+        {
+          "name": "Ingest VAYU Wearable Packet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"vayu-wearable-demo-99\",\n  \"name\": \"VAYU Wearable #99 (Delivery Fleet)\",\n  \"pm25\": 168,\n  \"voc\": 480,\n  \"lat\": 28.5821,\n  \"lng\": 77.2345,\n  \"temp\": 29.2,\n  \"humidity\": 57,\n  \"confidence\": 98,\n  \"battery\": 89\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/telemetry/ingest",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "telemetry", "ingest"]
+            },
+            "description": "Ingests a live telemetry packet from a VAYU wearable hardware unit."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Hotspot Clustering Service (:5002)",
+      "item": [
+        {
+          "name": "List Active Hotspot Clusters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/hotspots",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "hotspots"]
+            },
+            "description": "Retrieves AI-detected geospatial risk clusters with radius and primary pollutant."
+          },
+          "response": []
+        },
+        {
+          "name": "Run Spatial Cluster Detection Algorithm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/hotspots/detect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "hotspots", "detect"]
+            },
+            "description": "Executes spatial clustering correlating wearable sensor spikes and citizen complaints."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Hotspot Mitigation Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"mitigating\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/hotspots/cluster-h1/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "hotspots", "cluster-h1", "status"]
+            },
+            "description": "Transitions hotspot cluster status (active, mitigating, resolved)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Citizen Reporting Service (:5003)",
+      "item": [
+        {
+          "name": "List All Citizen Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports"]
+            },
+            "description": "Retrieves all citizen incident reports with category, severity, and status."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Reports by Category & Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports?category=air&status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports"],
+              "query": [
+                { "key": "category", "value": "air" },
+                { "key": "status", "value": "pending" }
+              ]
+            },
+            "description": "Query reports filtered by environmental category and triage status."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Geotagged Citizen Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Chemical Effluent Smoldering in Open Canal\",\n  \"category\": \"water\",\n  \"severity\": \"severe\",\n  \"description\": \"Dense sulfurous odor and reddish effluent pouring into storm drain near Industrial Sector 12.\",\n  \"lat\": 28.6720,\n  \"lng\": 77.1290,\n  \"address\": \"Industrial Area Phase 2, Gate #4\",\n  \"imageUrl\": \"https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=600&q=80\",\n  \"isAnonymous\": false,\n  \"reporterName\": \"Rohan Singhal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports"]
+            },
+            "description": "Submits a new geotagged citizen report. Checks for sensor correlation automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "Upvote Incident Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/rep-001/upvote",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "rep-001", "upvote"]
+            },
+            "description": "Increments community urgency upvotes for an incident."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Authority & Enforcement Service (:5004)",
+      "item": [
+        {
+          "name": "Authority Triage Dashboard & KPIs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/authority/triage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "authority", "triage"]
+            },
+            "description": "Fetches municipal triage queue, high-risk clusters, and key performance indicators."
+          },
+          "response": []
+        },
+        {
+          "name": "Progress Enforcement Status & Notes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"action_taken\",\n  \"assignedAgency\": \"DPCC Rapid Enforcement Wing\",\n  \"officerName\": \"Chief Officer R. Sengupta\",\n  \"actionNotes\": \"Site inspected under Section 24 Air Act. Sprinklers activated; notice served.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/authority/reports/rep-001/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "authority", "reports", "rep-001", "status"]
+            },
+            "description": "Updates report lifecycle and records an entry in the enforcement audit trail."
+          },
+          "response": []
+        },
+        {
+          "name": "Dispatch Rapid Enforcement Patrol",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"incidentId\": \"rep-001\",\n  \"agency\": \"DPCC Rapid Squad\",\n  \"vehicleNumber\": \"DL-2C-1092\",\n  \"teamLead\": \"Inspector Rajesh Yadav\",\n  \"priority\": \"CRITICAL\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/authority/dispatch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "authority", "dispatch"]
+            },
+            "description": "Dispatches municipal field vehicle and issues audit record."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Enforcement Audit Logs (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/authority/audit/export?format=json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "authority", "audit", "export"],
+              "query": [
+                { "key": "format", "value": "json" }
+              ]
+            },
+            "description": "Exports historical intervention audit logs as structured JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Enforcement Audit Logs (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/authority/audit/export?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "authority", "audit", "export"],
+              "query": [
+                { "key": "format", "value": "csv" }
+              ]
+            },
+            "description": "Exports historical intervention audit logs as downloadable CSV."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

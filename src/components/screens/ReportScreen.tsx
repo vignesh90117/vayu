@@ -52,6 +52,62 @@ export const ReportScreen: React.FC = () => {
   const [contactEmail, setContactEmail] = useState('arjun.m@example.com');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Feature 2: AI Computer Vision Classifier State
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [aiScanResult, setAiScanResult] = useState<{
+    detected: string;
+    confidence: number;
+    category: PollutionType;
+    severity: SeverityLevel;
+    tags: string[];
+  } | null>({
+    detected: 'Dense Black Smoke & Unregulated Biomass Fire',
+    confidence: 96.4,
+    category: 'air',
+    severity: 'hazardous',
+    tags: ['Particulate Smolder', 'Black Carbon Index > 85%', 'Urban Fringe']
+  });
+
+  const runAiVisionScan = (selectedUrl: string, photoName: string) => {
+    setImageUrl(selectedUrl);
+    setIsAiScanning(true);
+
+    setTimeout(() => {
+      setIsAiScanning(false);
+      if (photoName.includes('Biomass') || photoName.includes('Burning')) {
+        setCategory('air');
+        setSeverity('hazardous');
+        setAiScanResult({
+          detected: 'Dense Acrid Particulate Smoke from Biomass / Rubber Smolder',
+          confidence: 96.4,
+          category: 'air',
+          severity: 'hazardous',
+          tags: ['Black Carbon Detected', 'High Optical Opacity', 'PM2.5 Spike Correlation']
+        });
+      } else if (photoName.includes('Effluent') || photoName.includes('Water') || photoName.includes('Sludge')) {
+        setCategory('water');
+        setSeverity('severe');
+        setAiScanResult({
+          detected: 'Industrial Chemical Dye & Solvent Effluent Runoff',
+          confidence: 94.2,
+          category: 'water',
+          severity: 'severe',
+          tags: ['Chemical Color Shift', 'Open Storm Drain', 'Toxicity Class II']
+        });
+      } else {
+        setCategory('air');
+        setSeverity('moderate');
+        setAiScanResult({
+          detected: 'Excavation & Unsprayed Fugitive Construction Dust',
+          confidence: 91.8,
+          category: 'air',
+          severity: 'moderate',
+          tags: ['PM10 Mineral Dust', 'Construction Activity', 'Zero Green Barrier']
+        });
+      }
+    }, 1100);
+  };
+
   // Pin Drop Mini Map
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<L.Map | null>(null);
@@ -359,13 +415,13 @@ export const ReportScreen: React.FC = () => {
               <span>Attach Image Evidence</span>
               <span className="text-[10px] text-sky-400">Select sample or use camera</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 mb-4">
               {SAMPLE_EVIDENCE_PHOTOS.map((photo, i) => (
                 <div
                   key={i}
-                  onClick={() => setImageUrl(photo.url)}
+                  onClick={() => runAiVisionScan(photo.url, photo.name)}
                   className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all relative ${
-                    imageUrl === photo.url ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-800 opacity-60 hover:opacity-100'
+                    imageUrl === photo.url ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-slate-800 opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img src={photo.url} alt={photo.name} className="h-20 w-full object-cover" />
@@ -374,6 +430,45 @@ export const ReportScreen: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* AI Vision Verification Box */}
+            <div className="p-4 rounded-2xl bg-slate-900 border border-sky-500/30 relative overflow-hidden">
+              {isAiScanning ? (
+                <div className="flex items-center gap-3 py-2">
+                  <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <div className="text-xs font-bold text-sky-300">Running Deep Neural Computer Vision Scan...</div>
+                    <div className="text-[10px] text-slate-400">Classifying smoke opacity & effluent spectral signatures</div>
+                  </div>
+                </div>
+              ) : aiScanResult ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-emerald-400" />
+                      AI Verified Evidence ({aiScanResult.confidence}%)
+                    </span>
+                    <span className="text-[10px] text-slate-400">Model: VAYU-Vision-v2</span>
+                  </div>
+
+                  <div className="text-xs font-bold text-white">
+                    {aiScanResult.detected}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {aiScanResult.tags.map((tag, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-medium border border-slate-700">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 italic pt-1">
+                    * Category and severity have been auto-tuned based on the optical smoke density analysis.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

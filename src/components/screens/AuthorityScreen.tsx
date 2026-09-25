@@ -19,7 +19,11 @@ import {
   MapPin,
   ExternalLink,
   Search,
-  Check
+  Check,
+  Plane,
+  BellRing,
+  Sparkles,
+  X
 } from 'lucide-react';
 
 export const AuthorityScreen: React.FC = () => {
@@ -38,6 +42,12 @@ export const AuthorityScreen: React.FC = () => {
   const [interventionNotes, setInterventionNotes] = useState<string>('');
   const [dispatchAgency, setDispatchAgency] = useState<string>('Delhi Pollution Control Committee (DPCC) Rapid Patrol');
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string>('');
+
+  // Feature 4: Drone Survey & Public Alert Modal States
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [alertRadiusMeters, setAlertRadiusMeters] = useState(800);
+  const [alertMessage, setAlertMessage] = useState('Public Health Advisory: Severe particulate haze detected in this sector. Vulnerable groups, elderly, and children are advised to stay indoors and close windows.');
+  const [alertSentStatus, setAlertSentStatus] = useState<string>('');
 
   // Metrics
   const totalReports = reports.length;
@@ -90,6 +100,78 @@ export const AuthorityScreen: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleGenerateDronePlan = () => {
+    if (!selectedIncident) return;
+    const baseLat = selectedIncident.lat;
+    const baseLng = selectedIncident.lng;
+    const step = 0.003;
+
+    const droneMission = {
+      type: 'FeatureCollection',
+      missionName: `VAYU_Inspection_Survey_${selectedIncident.id}`,
+      incidentTarget: selectedIncident.title,
+      flightAltitudeMeters: 60,
+      surveySpeedMs: 5.5,
+      cameraAngleDeg: -90,
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [baseLng - step, baseLat - step],
+              [baseLng + step, baseLat - step],
+              [baseLng + step, baseLat + step],
+              [baseLng - step, baseLat + step],
+              [baseLng - step, baseLat - step]
+            ]]
+          },
+          properties: {
+            type: 'SURVEY_PERIMETER_GEOFENCE',
+            radiusMeters: 500
+          }
+        },
+        ...[
+          [-step, -step], [0, -step], [step, -step],
+          [step, 0], [0, 0], [-step, 0],
+          [-step, step], [0, step], [step, step]
+        ].map(([dLng, dLat], idx) => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [Number((baseLng + dLng).toFixed(5)), Number((baseLat + dLat).toFixed(5)), 60]
+          },
+          properties: {
+            waypointIndex: idx + 1,
+            action: 'TAKE_HIGH_RES_OPTICAL_SNAPSHOT',
+            opticalSensorCapture: true
+          }
+        }))
+      ]
+    };
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(droneMission, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute('href', dataStr);
+    dlAnchor.setAttribute('download', `VAYU_Drone_Mission_${selectedIncident.id}.geojson`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+
+    setSavedSuccessMsg(`Drone Survey Waypoint Path (.geojson) Generated & Downloaded!`);
+    setTimeout(() => setSavedSuccessMsg(''), 3500);
+  };
+
+  const handleBroadcastAlert = () => {
+    setAlertSentStatus('Dispatched to 4,820 resident devices via Regional Cell Broadcast');
+    setTimeout(() => {
+      setAlertSentStatus('');
+      setAlertModalOpen(false);
+      setSavedSuccessMsg('Emergency Advisory Dispatched to Community!');
+      setTimeout(() => setSavedSuccessMsg(''), 3000);
+    }, 1800);
   };
 
   return (
@@ -430,26 +512,49 @@ export const AuthorityScreen: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus(selectedIncident.status)}
-                  className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Save Logged Intervention</span>
-                </button>
+              <div className="pt-2 flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateStatus(selectedIncident.status)}
+                    className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Save Logged Intervention</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedReport(selectedIncident);
-                    setActiveTab('map');
-                  }}
-                  className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 font-semibold text-xs border border-slate-700 transition-colors"
-                >
-                  View on Map
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedReport(selectedIncident);
+                      setActiveTab('map');
+                    }}
+                    className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 font-semibold text-xs border border-slate-700 transition-colors"
+                  >
+                    View on Map
+                  </button>
+                </div>
+
+                {/* Feature 4: Autonomous Drone Path & Geofenced Alert */}
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={handleGenerateDronePlan}
+                    className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700 hover:border-sky-500 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <Plane className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Drone Mission Path</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAlertModalOpen(true)}
+                    className="p-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-semibold border border-rose-500/40 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <BellRing className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                    <span>Broadcast Public Alert</span>
+                  </button>
+                </div>
               </div>
             </>
           ) : (
@@ -460,6 +565,82 @@ export const AuthorityScreen: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Geofenced Emergency Public Alert Modal */}
+      {alertModalOpen && selectedIncident && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-panel max-w-lg w-full p-6 rounded-3xl border border-rose-500/50 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-rose-400">
+                <BellRing className="w-5 h-5 animate-pulse" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Geofenced Public Emergency Broadcast
+                </h3>
+              </div>
+              <button onClick={() => setAlertModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Trigger cell-broadcast SMS and push notifications to all resident mobile devices within the geofenced emergency perimeter around <strong>{selectedIncident.title}</strong>.
+            </p>
+
+            <div>
+              <label className="block text-[11px] text-slate-400 mb-1">Broadcast Radius</label>
+              <div className="flex gap-2">
+                {[500, 800, 1500].map(rad => (
+                  <button
+                    key={rad}
+                    type="button"
+                    onClick={() => setAlertRadiusMeters(rad)}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                      alertRadiusMeters === rad ? 'bg-rose-600 text-white border-rose-400' : 'bg-slate-900 text-slate-400 border-slate-800'
+                    }`}
+                  >
+                    {rad}m Radius
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] text-slate-400 mb-1">Public Health Warning Message</label>
+              <textarea
+                rows={3}
+                value={alertMessage}
+                onChange={(e) => setAlertMessage(e.target.value)}
+                className="w-full p-3 text-xs rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            {alertSentStatus ? (
+              <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-2">
+                <Check className="w-4 h-4" />
+                <span>{alertSentStatus}</span>
+              </div>
+            ) : (
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAlertModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBroadcastAlert}
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Transmit Broadcast Now</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

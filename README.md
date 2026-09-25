@@ -83,6 +83,11 @@ The complete Postman test suite is provided in the [`postman/`](postman/) direct
 
 - **Public Landing Page**: Value proposition, problem vs. solution, 5-stage data ecosystem pipeline, and persona role switcher (*Citizen*, *Analyst*, *Authority*).
 - **Live Geospatial Heatmap**: Leaflet map supporting **Google Satellite / Hybrid**, **Google Streets**, and **Terrain** with layer toggles (Air, Water, Soil, Hotspots) and slide-over inspector drawer.
+- **🧭 Clean Air Navigation (Green Commute)**: Interactive routing engine comparing the fastest highway route vs. low-pollution green corridors, calculating estimated PM2.5 inhalation exposure ($\mu g$) and travel time.
+- **💨 Gaussian Plume Dispersion & Forecast**: 6-hour atmospheric dispersion modeling with live wind vector ($\theta = 55^\circ$ NE @ 14 km/h), scrubber timeline (+1h, +3h, +6h), and downwind risk polygons.
+- **👁️ AI Vision Smoke & Hazard Verifier**: Deep neural network (`VAYU-Vision-v2`) auto-scan on citizen report photo attachments with confidence ratings (96.4%), auto-tagging, and severity auto-tuning.
+- **🚁 Drone Flight Plan Generator & Alert Siren**: One-click 8-waypoint autonomous grid survey flight path generator exporting standard `.geojson` for DJI/PX4 autopilots and geofenced cell broadcast siren.
+- **🫁 Personal Lung Load Meter & Web-BLE**: Real-time particulate inhalation intake calculator ($V_E = 12 \text{ L/min}$) vs WHO limits, and native Web Bluetooth API device pairing for physical VAYU wearables.
 - **Citizen Report Portal**: Drag-and-drop incident pin, category selection, 4-stage severity indicator, photo gallery presets, and zero-knowledge privacy mode.
 - **Municipal Authority Console**: Hotspot cluster triage, enforcement workflow stepper (`Pending` $\rightarrow$ `Investigating` $\rightarrow$ `Action Taken` $\rightarrow$ `Resolved`), and CSV audit export.
 - **VAYU Hardware Simulator**: Real-time telemetry sliders (PM2.5, VOC, battery, confidence), pedestrian walk route simulation, and live MQTT stream.

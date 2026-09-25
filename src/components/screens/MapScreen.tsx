@@ -27,8 +27,16 @@ import {
   Filter,
   ShieldCheck,
   ChevronRight,
-  MapPin
+  MapPin,
+  Navigation,
+  Compass,
+  Clock,
+  Check,
+  ArrowRight,
+  ShieldAlert,
+  Footprints
 } from 'lucide-react';
+import { COMMUTE_PRESETS, CURRENT_WIND } from '../../data/navigationRoutes';
 import { 
   AreaChart, 
   Area, 
@@ -82,6 +90,12 @@ export const MapScreen: React.FC = () => {
   // Google Maps Basemap Selection
   const [baseMap, setBaseMap] = useState<'googleHybrid' | 'googleStreets' | 'googleTerrain' | 'cartoVoyager'>('googleHybrid');
   const currentTileLayerRef = useRef<L.TileLayer | null>(null);
+
+  // Advanced Features: Clean Route Navigation & Plume Dispersion
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [selectedRouteType, setSelectedRouteType] = useState<'cleanest' | 'fastest'>('cleanest');
+  const [showPlumeDispersion, setShowPlumeDispersion] = useState(false);
+  const [forecastHour, setForecastHour] = useState<number>(1);
 
   // Initialize Map
   useEffect(() => {
@@ -322,7 +336,79 @@ export const MapScreen: React.FC = () => {
       });
     }
 
-  }, [sensors, reports, hotspots, waterSoilSpots, activeLayers, sourceFilter]);
+    // 5. Clean Air Navigation Polylines (when active)
+    if (showNavigation) {
+      const activePreset = COMMUTE_PRESETS[0];
+      activePreset.routes.forEach(route => {
+        const isClean = route.type === 'cleanest';
+        const isSelected = selectedRouteType === route.type;
+        const polyline = L.polyline(route.coordinates, {
+          color: isClean ? '#10b981' : '#ef4444',
+          weight: isSelected ? 6 : 3,
+          opacity: isSelected ? 0.95 : 0.45,
+          dashArray: isClean ? undefined : '6, 8'
+        });
+
+        polyline.bindTooltip(
+          `<b>${route.name}</b><br/>⏱️ ${route.durationMin} min | 💨 AQI ${route.avgAqi} | 🫁 ${route.pm25ExposureUg}µg Inhaled`,
+          { sticky: true, className: 'leaflet-popup-content-wrapper' }
+        );
+
+        polyline.on('click', () => setSelectedRouteType(route.type));
+        polyline.addTo(lg);
+      });
+
+      // Start & End markers
+      const startIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold border border-white shadow-xl flex items-center gap-1"><span>🟢</span><span>START</span></div>`,
+        iconSize: [60, 24],
+        iconAnchor: [30, 12]
+      });
+      L.marker(activePreset.originCoords, { icon: startIcon }).addTo(lg);
+
+      const destIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold border border-white shadow-xl flex items-center gap-1"><span>🏁</span><span>END</span></div>`,
+        iconSize: [60, 24],
+        iconAnchor: [30, 12]
+      });
+      L.marker(activePreset.destCoords, { icon: destIcon }).addTo(lg);
+    }
+
+    // 6. Gaussian Plume Wind Dispersion Modeling (when active)
+    if (showPlumeDispersion) {
+      hotspots.forEach(hotspot => {
+        if (hotspot.riskLevel !== 'critical') return;
+
+        // Downwind calculation: Wind blowing from NW (315°) towards SE (135°)
+        const driftDegrees = (CURRENT_WIND.speedKmh * forecastHour) / 350;
+        const spreadDegrees = (0.012 * forecastHour) + 0.008;
+
+        const conePoints: [number, number][] = [
+          [hotspot.lat, hotspot.lng],
+          [hotspot.lat - driftDegrees * 0.7 - spreadDegrees, hotspot.lng + driftDegrees * 0.7 - spreadDegrees],
+          [hotspot.lat - driftDegrees * 0.7 + spreadDegrees, hotspot.lng + driftDegrees * 0.7 + spreadDegrees]
+        ];
+
+        const plume = L.polygon(conePoints, {
+          color: '#f43f5e',
+          fillColor: '#f43f5e',
+          fillOpacity: 0.22,
+          weight: 1,
+          dashArray: '5, 5'
+        });
+
+        plume.bindTooltip(
+          `<b>Atmospheric Smoke Plume (+${forecastHour}h Forecast)</b><br/>Wind: ${CURRENT_WIND.directionLabel} @ ${CURRENT_WIND.speedKmh} km/h<br/>Predicted dispersion radius: ${(forecastHour * 1.8).toFixed(1)} km`,
+          { sticky: true }
+        );
+
+        plume.addTo(lg);
+      });
+    }
+
+  }, [sensors, reports, hotspots, waterSoilSpots, activeLayers, sourceFilter, showNavigation, selectedRouteType, showPlumeDispersion, forecastHour]);
 
   // Handle Quick Search or jump
   const handleSearch = (e: React.FormEvent) => {
@@ -482,6 +568,38 @@ export const MapScreen: React.FC = () => {
             </button>
           </div>
 
+          {/* Feature 1: Clean Air Route Planner Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowNavigation(!showNavigation);
+              if (!showNavigation) setInspectorOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg ${
+              showNavigation
+                ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/25'
+                : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-emerald-500/50'
+            }`}
+          >
+            <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Clean Route</span>
+          </button>
+
+          {/* Feature 3: Plume Wind Dispersion Forecast Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowPlumeDispersion(!showPlumeDispersion)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg ${
+              showPlumeDispersion
+                ? 'bg-rose-600 text-white border-rose-400 shadow-rose-500/25'
+                : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-rose-500/50'
+            }`}
+          >
+            <Wind className="w-3.5 h-3.5 text-rose-400" />
+            <span>Plume Forecast</span>
+            <span className="text-[10px] opacity-80">14km/h NW</span>
+          </button>
+
         </div>
 
         {/* Right CTA */}
@@ -499,6 +617,137 @@ export const MapScreen: React.FC = () => {
 
       {/* Main Map Canvas */}
       <div ref={mapContainerRef} className="h-full w-full z-10" />
+
+      {/* Feature 1: Clean Air Navigation Drawer */}
+      {showNavigation && (
+        <div className="absolute top-20 left-4 sm:w-96 z-30 pointer-events-auto glass-panel rounded-3xl border border-emerald-500/40 shadow-2xl p-5 flex flex-col space-y-4 max-h-[85vh] overflow-y-auto">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Navigation className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                Clean Air Navigation Engine
+              </span>
+            </div>
+            <button
+              onClick={() => setShowNavigation(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs space-y-2">
+            <div className="flex items-center gap-2 text-slate-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <strong className="text-white">From:</strong> AIIMS / South Extension
+            </div>
+            <div className="h-2 w-px bg-slate-700 ml-1.5" />
+            <div className="flex items-center gap-2 text-slate-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+              <strong className="text-white">To:</strong> Connaught Place Central Hub
+            </div>
+          </div>
+
+          {/* Route Options Comparison */}
+          <div className="space-y-3">
+            {COMMUTE_PRESETS[0].routes.map(route => {
+              const isClean = route.type === 'cleanest';
+              const isSelected = selectedRouteType === route.type;
+
+              return (
+                <div
+                  key={route.id}
+                  onClick={() => setSelectedRouteType(route.type)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                    isSelected
+                      ? isClean
+                        ? 'bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/30'
+                        : 'bg-rose-950/40 border-rose-500 ring-2 ring-rose-500/30'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                      isClean ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    }`}>
+                      {isClean ? '⭐ Clean Corridor' : 'Fastest Highway'}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-white">
+                      {route.durationMin} mins ({route.distanceKm} km)
+                    </span>
+                  </div>
+
+                  <h4 className="text-xs font-bold text-white mb-2">{route.name}</h4>
+
+                  <div className="grid grid-cols-2 gap-2 text-center text-xs pt-1 border-t border-slate-800/80">
+                    <div className="p-1.5 rounded-lg bg-slate-900/80">
+                      <span className="text-[10px] text-slate-400 block">Mean AQI</span>
+                      <strong className={isClean ? 'text-emerald-400' : 'text-rose-400'}>{route.avgAqi}</strong>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-slate-900/80">
+                      <span className="text-[10px] text-slate-400 block">PM2.5 Lung Load</span>
+                      <strong className={isClean ? 'text-emerald-400' : 'text-rose-400'}>{route.pm25ExposureUg} µg</strong>
+                    </div>
+                  </div>
+
+                  {isClean && (
+                    <div className="mt-2.5 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 font-semibold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>Saves 58.2 µg of inhaled particulate toxins!</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Feature 3: Plume Wind Dispersion Scrubber Floating Bar */}
+      {showPlumeDispersion && (
+        <div className="absolute top-20 right-4 sm:w-80 z-30 pointer-events-auto glass-panel rounded-3xl border border-rose-500/40 shadow-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+              <Wind className="w-4 h-4 animate-pulse" />
+              <span>Gaussian Plume Dispersion</span>
+            </span>
+            <button onClick={() => setShowPlumeDispersion(false)} className="text-slate-400 hover:text-white">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-300">
+            Simulating downwind atmospheric dispersion from active critical hotspots based on real-time wind vectors:
+          </p>
+
+          <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs flex justify-between">
+            <span className="text-slate-400">Wind Direction:</span>
+            <strong className="text-sky-300">{CURRENT_WIND.directionLabel}</strong>
+          </div>
+
+          <div>
+            <label className="block text-[11px] text-slate-400 mb-1.5">Forecast Time Window:</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 3, 6].map(hours => (
+                <button
+                  key={hours}
+                  type="button"
+                  onClick={() => setForecastHour(hours)}
+                  className={`py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    forecastHour === hours
+                      ? 'bg-rose-600 text-white border-rose-400 shadow-md'
+                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  +{hours} Hour{hours > 1 ? 's' : ''}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Slide-over Inspector Drawer (Left / Bottom on Mobile) */}
       {inspectorOpen && activeItem && (

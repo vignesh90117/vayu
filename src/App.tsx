@@ -9,10 +9,12 @@ import { AuthorityScreen } from './components/screens/AuthorityScreen';
 import { SimulatorScreen } from './components/screens/SimulatorScreen';
 
 const MainContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, theme } = useApp();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
+      theme === 'figma-light' ? 'bg-[#f8fafc] text-slate-900' : 'bg-slate-950 text-slate-100'
+    }`}>
       <Navbar />
       
       <main className="flex-1">

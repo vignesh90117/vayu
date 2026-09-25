@@ -18,6 +18,10 @@ interface AppContextType {
   addReport: (report: Omit<CitizenReport, 'id' | 'timestamp' | 'status' | 'upvotes'>) => void;
   upvoteReport: (reportId: string) => void;
   updateReportStatus: (reportId: string, status: ReportStatus, notes?: string, agency?: string) => void;
+  // Theme mode: 'figma-light' (matches Figma UX Design System) | 'dark' (cyberpunk)
+  theme: 'figma-light' | 'dark';
+  setTheme: (theme: 'figma-light' | 'dark') => void;
+  toggleTheme: () => void;
   // Simulator state & controls
   isSimulating: boolean;
   setIsSimulating: (sim: boolean) => void;
@@ -28,7 +32,8 @@ interface AppContextType {
 const STORAGE_KEYS = {
   REPORTS: 'vayu_citizen_reports_v1',
   SENSORS: 'vayu_sensors_v1',
-  HOTSPOTS: 'vayu_hotspots_v1'
+  HOTSPOTS: 'vayu_hotspots_v1',
+  THEME: 'vayu_theme_mode_v1'
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,6 +58,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [waterSoilSpots] = useState<WaterSoilSpot[]>(INITIAL_WATER_SOIL);
+
+  const [theme, setThemeState] = useState<'figma-light' | 'dark'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
+    return (saved === 'dark' || saved === 'figma-light') ? saved : 'figma-light';
+  });
+
+  const setTheme = (t: 'figma-light' | 'dark') => {
+    setThemeState(t);
+    localStorage.setItem(STORAGE_KEYS.THEME, t);
+  };
+
+  const toggleTheme = () => {
+    const next = theme === 'figma-light' ? 'dark' : 'figma-light';
+    setThemeState(next);
+    localStorage.setItem(STORAGE_KEYS.THEME, next);
+  };
 
   const [selectedSensor, setSelectedSensor] = useState<SensorReading | null>(null);
   const [selectedReport, setSelectedReport] = useState<CitizenReport | null>(null);
@@ -261,6 +282,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addReport,
         upvoteReport,
         updateReportStatus,
+        theme,
+        setTheme,
+        toggleTheme,
         isSimulating,
         setIsSimulating,
         simulatedWearable,

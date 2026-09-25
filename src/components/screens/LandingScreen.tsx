@@ -23,9 +23,10 @@ import {
 import { getAqiCategory } from '../../data/mockData';
 
 export const LandingScreen: React.FC = () => {
-  const { setActiveTab, sensors, reports, hotspots, simulatedWearable } = useApp();
+  const { setActiveTab, sensors, reports, hotspots, simulatedWearable, theme } = useApp();
   const [selectedRole, setSelectedRole] = useState<'citizen' | 'analyst' | 'authority'>('citizen');
 
+  const isLight = theme === 'figma-light';
   const activeSensorsCount = sensors.length;
   const criticalHotspots = hotspots.filter(h => h.riskLevel === 'critical').length;
   const resolvedReports = reports.filter(r => r.status === 'resolved' || r.status === 'action_taken').length;
@@ -38,8 +39,12 @@ export const LandingScreen: React.FC = () => {
       {/* Hero Section */}
       <section className="relative pt-12 md:pt-20 overflow-hidden">
         {/* Ambient gradient backdrops */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-sky-500/20 via-teal-500/15 to-emerald-500/20 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute top-10 right-10 w-72 h-72 bg-sky-600/10 blur-[100px] rounded-full pointer-events-none" />
+        {!isLight && (
+          <>
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-sky-500/20 via-teal-500/15 to-emerald-500/20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute top-10 right-10 w-72 h-72 bg-sky-600/10 blur-[100px] rounded-full pointer-events-none" />
+          </>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -48,60 +53,75 @@ export const LandingScreen: React.FC = () => {
             <div className="lg:col-span-7 space-y-6">
               
               {/* Badge */}
-              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/25 backdrop-blur-md">
+              <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border backdrop-blur-md ${
+                isLight ? 'bg-blue-50/90 border-blue-200 text-blue-700' : 'bg-sky-500/10 border-sky-500/25 text-sky-300'
+              }`}>
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                 </span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-sky-300">
-                  Wearable IoT + Geospatial Intelligence
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  Real-Time Environmental Intelligence
                 </span>
               </div>
 
-              {/* Main Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1] font-heading">
-                Clean Air. <br />
-                <span className="bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
-                  Everywhere You Go.
+              {/* Main Headline - Matches Figma Artboard 2 */}
+              <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] font-heading ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
+                See pollution.<br />
+                Understand the hotspot.<br />
+                <span className={isLight ? 'text-blue-600' : 'bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent'}>
+                  Take action.
                 </span>
               </h1>
 
-              <p className="text-lg text-slate-300 max-w-2xl leading-relaxed">
-                <strong className="text-white font-semibold">VAYU</strong> is an end-to-end pollution intelligence platform. By synthesizing continuous real-world telemetry from <strong className="text-sky-300 font-medium">VAYU wearable sensors</strong>, fixed ambient stations, and verified citizen reports, we transform invisible environmental toxicity into rapid community and municipal action.
+              <p className={`text-lg max-w-2xl leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                <strong className={isLight ? 'text-slate-900 font-semibold' : 'text-white font-semibold'}>VAYU</strong> is an end-to-end pollution intelligence platform. By synthesizing continuous real-world telemetry from <strong className={isLight ? 'text-blue-600 font-medium' : 'text-sky-300 font-medium'}>VAYU wearable sensors</strong>, fixed ambient stations, and verified citizen reports, we transform invisible environmental toxicity into rapid community and municipal action.
               </p>
 
               {/* Primary Call to Actions */}
               <div className="flex flex-wrap items-center gap-4 pt-3">
                 <button
                   onClick={() => setActiveTab('map')}
-                  className="flex items-center gap-3 px-7 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-bold text-sm shadow-xl shadow-sky-500/25 hover:shadow-sky-500/40 hover:scale-[1.02] active:scale-95 transition-all"
+                  className={`flex items-center gap-3 px-7 py-3.5 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all ${
+                    isLight 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25' 
+                      : 'bg-gradient-to-r from-sky-500 to-emerald-500 text-white shadow-sky-500/25 hover:shadow-sky-500/40'
+                  }`}
                 >
                   <Map className="w-4 h-4" />
-                  <span>Explore Live Heatmap</span>
+                  <span>Explore Live Map</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
 
                 <button
                   onClick={() => setActiveTab('report')}
-                  className="flex items-center gap-3 px-6 py-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-semibold text-sm border border-slate-700/80 shadow-lg hover:border-emerald-500/40 transition-all active:scale-95"
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-xl font-semibold text-sm border shadow-md transition-all active:scale-95 ${
+                    isLight 
+                      ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 shadow-sm' 
+                      : 'bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-700/80 hover:border-emerald-500/40'
+                  }`}
                 >
-                  <AlertTriangle className="w-4 h-4 text-emerald-400" />
-                  <span>Report Pollution Incident</span>
+                  <AlertTriangle className="w-4 h-4 text-emerald-500" />
+                  <span>Report Pollution</span>
                 </button>
               </div>
 
               {/* Quick Trust / Hardware specs */}
-              <div className="flex items-center gap-6 pt-4 text-xs text-slate-400 border-t border-slate-800/80">
+              <div className={`flex items-center gap-6 pt-4 text-xs border-t ${
+                isLight ? 'text-slate-500 border-slate-200' : 'text-slate-400 border-slate-800/80'
+              }`}>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                   <span>Wearable PM2.5 & VOC Ingestion</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-sky-400" />
+                  <CheckCircle2 className={`w-4 h-4 ${isLight ? 'text-blue-500' : 'text-sky-400'}`} />
                   <span>Privacy-Preserving GPS</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                  <CheckCircle2 className={`w-4 h-4 ${isLight ? 'text-purple-600' : 'text-purple-400'}`} />
                   <span>Authority Action Protocol</span>
                 </div>
               </div>
@@ -110,32 +130,42 @@ export const LandingScreen: React.FC = () => {
 
             {/* Right Column: Live Telemetry Snapshot Card */}
             <div className="lg:col-span-5">
-              <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-slate-800/90 shadow-2xl relative group hover:border-sky-500/30 transition-all">
+              <div className={`p-6 sm:p-7 rounded-3xl border shadow-2xl relative group transition-all ${
+                isLight 
+                  ? 'bg-white border-slate-200/90 shadow-slate-200/70 hover:border-blue-400' 
+                  : 'glass-panel border-slate-800/90 hover:border-sky-500/30'
+              }`}>
                 
                 {/* Header */}
-                <div className="flex items-center justify-between pb-5 border-b border-slate-800">
+                <div className={`flex items-center justify-between pb-5 border-b ${isLight ? 'border-slate-100' : 'border-slate-800'}`}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+                    <div className={`p-2 rounded-xl border ${
+                      isLight ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-sky-500/10 border-sky-500/20 text-sky-400'
+                    }`}>
                       <Cpu className="w-5 h-5 animate-pulse" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">Live VAYU Telemetry Node</h3>
-                      <p className="text-[11px] text-slate-400">Active Mobile Wearer stream</p>
+                      <h3 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Live VAYU Telemetry Node</h3>
+                      <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Active Mobile Wearer stream</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border flex items-center gap-1.5 ${
+                    isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                     LIVE
                   </span>
                 </div>
 
                 {/* Live AQI Big Badge */}
-                <div className="my-6 p-5 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex items-center justify-between">
+                <div className={`my-6 p-5 rounded-2xl border flex items-center justify-between ${
+                  isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-900/80 border-slate-800/80'
+                }`}>
                   <div>
-                    <span className="text-xs uppercase font-bold tracking-wider text-slate-400">
+                    <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                       Hyperlocal AQI
                     </span>
-                    <div className="text-4xl font-extrabold text-white mt-1">
+                    <div className={`text-4xl font-extrabold mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                       {simulatedWearable.aqi}
                     </div>
                     <span className={`inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-md ${avgAqiInfo.bgColor} ${avgAqiInfo.textColor}`}>
@@ -144,16 +174,16 @@ export const LandingScreen: React.FC = () => {
                   </div>
 
                   <div className="text-right space-y-1">
-                    <div className="text-xs text-slate-400">
-                      PM2.5: <strong className="text-white">{simulatedWearable.pm25} µg/m³</strong>
+                    <div className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      PM2.5: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{simulatedWearable.pm25} µg/m³</strong>
                     </div>
-                    <div className="text-xs text-slate-400">
-                      VOC Index: <strong className="text-cyan-300">{simulatedWearable.voc} ppb</strong>
+                    <div className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      VOC Index: <strong className={isLight ? 'text-blue-700' : 'text-cyan-300'}>{simulatedWearable.voc} ppb</strong>
                     </div>
-                    <div className="text-xs text-slate-400">
-                      Confidence: <strong className="text-emerald-400">{simulatedWearable.confidence}%</strong>
+                    <div className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      Confidence: <strong className="text-emerald-600">{simulatedWearable.confidence}%</strong>
                     </div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                       Lat: {simulatedWearable.lat.toFixed(4)}, Lng: {simulatedWearable.lng.toFixed(4)}
                     </div>
                   </div>
@@ -161,29 +191,31 @@ export const LandingScreen: React.FC = () => {
 
                 {/* Sub-metrics Grid */}
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Active Sensors</div>
-                    <div className="text-lg font-bold text-white mt-0.5">{activeSensorsCount} Nodes</div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/50 border-slate-800'}`}>
+                    <div className={`text-[10px] uppercase font-semibold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Active Sensors</div>
+                    <div className={`text-lg font-bold mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{activeSensorsCount} Nodes</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Hotspot Clusters</div>
-                    <div className="text-lg font-bold text-rose-400 mt-0.5">{criticalHotspots} Critical</div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50/60 border-rose-200' : 'bg-slate-900/50 border-slate-800'}`}>
+                    <div className={`text-[10px] uppercase font-semibold ${isLight ? 'text-rose-600' : 'text-slate-400'}`}>Hotspots</div>
+                    <div className="text-lg font-bold text-rose-600 mt-0.5">{criticalHotspots} Critical</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Interventions</div>
-                    <div className="text-lg font-bold text-emerald-400 mt-0.5">{resolvedReports} Resolved</div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-900/50 border-slate-800'}`}>
+                    <div className={`text-[10px] uppercase font-semibold ${isLight ? 'text-emerald-700' : 'text-slate-400'}`}>Interventions</div>
+                    <div className="text-lg font-bold text-emerald-600 mt-0.5">{resolvedReports} Resolved</div>
                   </div>
                 </div>
 
                 {/* Action CTA */}
-                <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-sky-400" />
+                <div className={`mt-5 pt-4 border-t flex items-center justify-between ${isLight ? 'border-slate-100' : 'border-slate-800/80'}`}>
+                  <span className={`text-xs flex items-center gap-1.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <Activity className={`w-3.5 h-3.5 ${isLight ? 'text-blue-600' : 'text-sky-400'}`} />
                     Updated 2 seconds ago
                   </span>
                   <button
                     onClick={() => setActiveTab('simulator')}
-                    className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1 transition-colors"
+                    className={`text-xs font-semibold flex items-center gap-1 transition-colors ${
+                      isLight ? 'text-blue-600 hover:text-blue-700' : 'text-sky-400 hover:text-sky-300'
+                    }`}
                   >
                     <span>Test Hardware Controls</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -350,92 +382,96 @@ export const LandingScreen: React.FC = () => {
         </div>
       </section>
 
-      {/* Persona Role Explorer (Citizen / Analyst / Authority) */}
+      {/* Persona Role Explorer (Citizen / Analyst / Authority) - Matches Figma Artboard 2 */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-            Tailored Experiences
+          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-blue-600' : 'text-emerald-400'}`}>
+            Stakeholder Ecosystem
           </span>
-          <h2 className="text-3xl font-extrabold text-white mt-1 font-heading">
-            Built for Three Critical Roles
+          <h2 className={`text-3xl font-extrabold mt-1 font-heading ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Built for these actors.
           </h2>
-          <p className="text-slate-400 text-sm mt-2">
-            Switch views to explore how different stakeholders interact with the VAYU ecosystem.
+          <p className={`text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Tailored environmental intelligence workflows designed specifically for citizens, researchers, and enforcement authorities.
           </p>
         </div>
 
         {/* Role Tabs */}
         <div className="flex justify-center mb-8">
-          <div className="p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex gap-2">
+          <div className={`p-1.5 rounded-2xl border flex gap-2 ${
+            isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-900/90 border-slate-800'
+          }`}>
             <button
               onClick={() => setSelectedRole('citizen')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 selectedRole === 'citizen'
-                  ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Users className="w-4 h-4" />
-              <span>Citizens & Commuters</span>
+              <span>Citizens</span>
             </button>
 
             <button
               onClick={() => setSelectedRole('analyst')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 selectedRole === 'analyst'
-                  ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-teal-600 text-white shadow-md shadow-teal-500/25'
+                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Layers className="w-4 h-4" />
-              <span>Researchers & Analysts</span>
+              <span>Analysts</span>
             </button>
 
             <button
               onClick={() => setSelectedRole('authority')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 selectedRole === 'authority'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/25'
+                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Shield className="w-4 h-4" />
-              <span>Municipal Authorities</span>
+              <span>Authorities</span>
             </button>
           </div>
         </div>
 
         {/* Selected Role Content */}
-        <div className="glass-panel p-8 rounded-3xl border border-slate-800">
+        <div className={`p-8 rounded-3xl border transition-all ${
+          isLight ? 'bg-white border-slate-200 shadow-sm' : 'glass-panel border-slate-800'
+        }`}>
           {selectedRole === 'citizen' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-sky-500/10 text-sky-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-blue-100/80 text-blue-700' : 'bg-sky-500/10 text-sky-400'}`}>
                   <Wind className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Hyperlocal Exposure</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Real-time air quality where you walk, cycle, or wait for the bus — not an average from a station 8 miles away.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Hyperlocal Exposure</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Real-time air quality where you walk, cycle, or commute — including clean route navigation that minimizes lung load.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-emerald-500/10 text-emerald-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-emerald-100/80 text-emerald-700' : 'bg-emerald-500/10 text-emerald-400'}`}>
                   <AlertTriangle className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">1-Click Incident Pin</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Drop a pin on open waste burning, construction dust clouds, or toxic effluent with immediate photo upload and GPS verification.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>1-Click Incident Pin</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Drop a pin on open waste burning, industrial smoke, or toxic runoff with AI Computer Vision proof validation.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-purple-500/10 text-purple-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-purple-100/80 text-purple-700' : 'bg-purple-500/10 text-purple-400'}`}>
                   <Activity className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Health Advisories</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Tailored recommendations: Safe jogging windows, N95 mask necessity, and asthma trigger warnings.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Personal Lung Load Meter</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Continuous particulate dosimeter tracking microgram PM2.5 intake against daily WHO safe breathing standards.
                 </p>
               </div>
             </div>
@@ -443,33 +479,33 @@ export const LandingScreen: React.FC = () => {
 
           {selectedRole === 'analyst' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-teal-500/10 text-teal-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-teal-100/80 text-teal-700' : 'bg-teal-500/10 text-teal-400'}`}>
                   <Layers className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Multi-Pollutant Layers</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Toggle between PM2.5, PM10, VOC/Benzene, NO2, Industrial Water BOD, and Illegal Soil dumps.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Multi-Pollutant Layers</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Toggle between PM2.5, PM10, VOC/Benzene, NO2, Industrial Water BOD, and Illegal Soil dumps on Google Satellite & Hybrid maps.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-sky-500/10 text-sky-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-blue-100/80 text-blue-700' : 'bg-sky-500/10 text-sky-400'}`}>
                   <Activity className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Diurnal Trend Analysis</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Inspect 24-hour diurnal cycling, thermal inversion patterns, and heavy vehicle transit windows.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Gaussian Plume Dispersion</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Atmospheric wind vector simulation modeling 6-hour downwind drift patterns from confirmed industrial hotspots.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-amber-500/10 text-amber-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-amber-100/80 text-amber-700' : 'bg-amber-500/10 text-amber-400'}`}>
                   <FileCheck2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Sensor Calibration</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Sensor confidence scoring comparing low-cost wearable sensors with reference grade CPCB / EPA monitors.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Sensor Cross-Calibration</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Dynamic confidence scoring comparing low-cost wearable sensors with reference grade CPCB / EPA monitors.
                 </p>
               </div>
             </div>
@@ -477,33 +513,33 @@ export const LandingScreen: React.FC = () => {
 
           {selectedRole === 'authority' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-rose-500/10 text-rose-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-rose-100/80 text-rose-700' : 'bg-rose-500/10 text-rose-400'}`}>
                   <Flame className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Automated Hotspot Clusters</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Instant alerts when 3+ sensors in a 500m radius detect PM2.5 above 250 µg/m³ for over 20 minutes.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Autonomous Drone Missions</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Generate 8-waypoint grid survey flight paths (.geojson) around active hotspots for aerial DJI/PX4 drone inspection.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-purple-500/10 text-purple-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-purple-100/80 text-purple-700' : 'bg-purple-500/10 text-purple-400'}`}>
                   <Shield className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Triage & Dispatch Workflow</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Assign inspection teams, track intervention statuses, and log regulatory penalties with geo-audit trails.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Triage & Patrol Dispatch</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Assign municipal inspection units, track 4-stage enforcement workflows, and trigger geofenced public siren alerts.
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-                <div className="p-3 w-fit rounded-xl bg-emerald-500/10 text-emerald-400 mb-4">
+              <div className={`p-6 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+                <div className={`p-3 w-fit rounded-xl mb-4 ${isLight ? 'bg-emerald-100/80 text-emerald-700' : 'bg-emerald-500/10 text-emerald-400'}`}>
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Resolution Verification</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Measure post-intervention sensor readings to confirm that the pollution source was truly extinguished.
+                <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Compliance Audit Trails</h3>
+                <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Export time-stamped incident audit logs to CSV with sensor proof for regulatory penalties and public accountability.
                 </p>
               </div>
             </div>

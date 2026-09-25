@@ -1,6 +1,8 @@
 import { SensorReading, CitizenReport, HotspotCluster, WaterSoilSpot, SeverityLevel } from '../types';
+import { ALL_INDIA_SENSORS } from './indiaCities';
 
 export const INITIAL_SENSORS: SensorReading[] = [
+  ...ALL_INDIA_SENSORS,
   {
     id: 'vayu-wearable-101',
     name: 'Vayu Wearable #101 (Cyclist - South Link)',

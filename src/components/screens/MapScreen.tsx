@@ -27,6 +27,9 @@ import {
   Filter,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
+  Globe,
+  Building,
   MapPin,
   Navigation,
   Compass,
@@ -37,6 +40,7 @@ import {
   Footprints
 } from 'lucide-react';
 import { COMMUTE_PRESETS, CURRENT_WIND } from '../../data/navigationRoutes';
+import { INDIA_CITIES, IndiaCity } from '../../data/indiaCities';
 import { 
   AreaChart, 
   Area, 
@@ -96,6 +100,64 @@ export const MapScreen: React.FC = () => {
   const [selectedRouteType, setSelectedRouteType] = useState<'cleanest' | 'fastest'>('cleanest');
   const [showPlumeDispersion, setShowPlumeDispersion] = useState(false);
   const [forecastHour, setForecastHour] = useState<number>(1);
+
+  // Indian Cities Quick-Jump & Point Selection State
+  const [citySearchOpen, setCitySearchOpen] = useState(false);
+  const [cityQuery, setCityQuery] = useState('');
+  const [cityRegionFilter, setCityRegionFilter] = useState<'All' | 'North' | 'South' | 'East' | 'West' | 'Central' | 'Northeast' | 'Islands'>('All');
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+
+  const filteredCities = INDIA_CITIES.filter(city => {
+    const matchesQuery = city.name.toLowerCase().includes(cityQuery.toLowerCase()) || 
+                         city.state.toLowerCase().includes(cityQuery.toLowerCase());
+    const matchesRegion = cityRegionFilter === 'All' || city.region === cityRegionFilter;
+    return matchesQuery && matchesRegion;
+  });
+
+  const handleSelectCity = (city: IndiaCity) => {
+    setSelectedCityId(city.id);
+    setCitySearchOpen(false);
+
+    // Smoothly fly map directly to this city coordinate
+    mapInstanceRef.current?.flyTo([city.lat, city.lng], 12, { animate: true, duration: 1.5 });
+
+    // Look for matching sensor node in active list
+    const existing = sensors.find(s => s.id === `city-sensor-${city.id}` || s.locationName.includes(city.name));
+    if (existing) {
+      setActiveItem({ type: 'sensor', data: existing });
+      setSelectedSensor(existing);
+    } else {
+      const citySensor = {
+        id: `city-sensor-${city.id}`,
+        name: `${city.name} Official Ambient Monitor`,
+        sourceType: 'fixed_station' as const,
+        lat: city.lat,
+        lng: city.lng,
+        locationName: `${city.name} (${city.state}) — ${city.stationName}`,
+        aqi: city.aqi,
+        pm25: city.pm25,
+        pm10: city.pm10,
+        voc: city.voc,
+        no2: city.no2,
+        co: city.co,
+        temp: city.temp,
+        humidity: city.humidity,
+        confidence: city.confidence,
+        battery: 100,
+        userTag: `Regional Capital Monitor (${city.region} India)`,
+        lastUpdated: 'Live Telemetry Feed',
+        hourlyTrend: city.hourlyTrend
+      };
+      setActiveItem({ type: 'sensor', data: citySensor });
+      setSelectedSensor(citySensor);
+    }
+    setInspectorOpen(true);
+  };
+
+  const handleZoomAllIndia = () => {
+    setSelectedCityId(null);
+    mapInstanceRef.current?.flyTo([22.5, 79.5], 5, { animate: true, duration: 1.5 });
+  };
 
   // Initialize Map
   useEffect(() => {
@@ -223,7 +285,7 @@ export const MapScreen: React.FC = () => {
       });
     }
 
-    // 2. Air Quality Sensors (Vayu Wearables & Fixed Stations)
+    // 2. Air Quality Sensors (Vayu Wearables, Indian Cities & Fixed Stations)
     if (activeLayers.air) {
       sensors.forEach(sensor => {
         if (sourceFilter === 'wearables' && sensor.sourceType !== 'vayu_wearable') return;
@@ -232,29 +294,61 @@ export const MapScreen: React.FC = () => {
 
         const aqiInfo = getAqiCategory(sensor.aqi);
         const isWearable = sensor.sourceType === 'vayu_wearable';
+        const isCitySensor = sensor.id.startsWith('city-sensor-');
+        const cityName = isCitySensor 
+          ? sensor.name.replace(' Official Ambient Monitor', '')
+          : (sensor.locationName.split(' (')[0] || sensor.name);
+        const isSelected = (selectedSensor?.id === sensor.id) || Boolean(selectedCityId && sensor.id.includes(selectedCityId));
 
-        const markerHtml = `
-          <div class="relative flex items-center justify-center cursor-pointer group">
-            ${isWearable ? '<span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-sky-400 opacity-50"></span>' : ''}
-            <div class="relative flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold border shadow-xl transition-transform group-hover:scale-110"
-                 style="background-color: ${aqiInfo.color}; border-color: rgba(255,255,255,0.4);">
-              <span>${isWearable ? '⌚' : '🏢'}</span>
-              <span>${sensor.aqi}</span>
+        let markerHtml = '';
+        let iconWidth = 52;
+        let iconHeight = 32;
+
+        if (isCitySensor) {
+          iconWidth = 120;
+          iconHeight = 36;
+          markerHtml = `
+            <div class="relative flex items-center justify-center cursor-pointer group transition-transform hover:scale-115 z-20">
+              ${isSelected ? '<span class="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-cyan-400 opacity-75"></span>' : ''}
+              <div class="relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white text-[11px] font-black shadow-2xl border-2 transition-all ${
+                isSelected ? 'ring-4 ring-cyan-400 scale-110 shadow-cyan-500/50' : ''
+              }"
+                   style="background-color: ${aqiInfo.color}; border-color: rgba(255,255,255,0.95); box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
+                <span class="truncate max-w-[68px] font-extrabold tracking-tight">${cityName}</span>
+                <span class="px-1.5 py-0.5 bg-black/40 rounded-full text-[10px] font-black tracking-wider text-white shadow-inner">${sensor.aqi}</span>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          markerHtml = `
+            <div class="relative flex items-center justify-center cursor-pointer group">
+              ${isWearable ? '<span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-sky-400 opacity-50"></span>' : ''}
+              ${isSelected ? '<span class="animate-ping absolute inline-flex h-10 w-10 rounded-full bg-cyan-400 opacity-75"></span>' : ''}
+              <div class="relative flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold border shadow-xl transition-transform group-hover:scale-110 ${
+                isSelected ? 'ring-4 ring-cyan-400 scale-110' : ''
+              }"
+                   style="background-color: ${aqiInfo.color}; border-color: rgba(255,255,255,0.6);">
+                <span>${isWearable ? '⌚' : '🏢'}</span>
+                <span>${sensor.aqi}</span>
+              </div>
+            </div>
+          `;
+        }
 
         const icon = L.divIcon({
           className: 'custom-div-icon',
           html: markerHtml,
-          iconSize: [44, 44],
-          iconAnchor: [22, 22]
+          iconSize: [iconWidth, iconHeight],
+          iconAnchor: [iconWidth / 2, iconHeight / 2]
         });
 
         const marker = L.marker([sensor.lat, sensor.lng], { icon });
         marker.on('click', () => {
           setActiveItem({ type: 'sensor', data: sensor });
           setSelectedSensor(sensor);
+          if (isCitySensor) {
+            setSelectedCityId(sensor.id.replace('city-sensor-', ''));
+          }
           setSelectedReport(null);
           setSelectedHotspot(null);
           setInspectorOpen(true);
@@ -408,7 +502,7 @@ export const MapScreen: React.FC = () => {
       });
     }
 
-  }, [sensors, reports, hotspots, waterSoilSpots, activeLayers, sourceFilter, showNavigation, selectedRouteType, showPlumeDispersion, forecastHour]);
+  }, [sensors, reports, hotspots, waterSoilSpots, activeLayers, sourceFilter, showNavigation, selectedRouteType, showPlumeDispersion, forecastHour, selectedCityId, selectedSensor]);
 
   // Handle Quick Search or jump
   const handleSearch = (e: React.FormEvent) => {
@@ -441,9 +535,33 @@ export const MapScreen: React.FC = () => {
       {/* Top Floating Control Bar */}
       <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none flex flex-wrap items-center justify-between gap-3">
         
-        {/* Layer Switches & Search */}
+        {/* Layer Switches, City Selector & Search */}
         <div className="pointer-events-auto flex flex-wrap items-center gap-2">
           
+          {/* Indian Cities Quick-Jump Button */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCitySearchOpen(!citySearchOpen)}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 text-white text-xs font-black tracking-wide shadow-xl flex items-center gap-2 hover:opacity-95 active:scale-95 transition-all border border-white/20"
+            >
+              <span>🇮🇳</span>
+              <span>{selectedCityId ? (INDIA_CITIES.find(c => c.id === selectedCityId)?.name || 'Select City') : 'Cities of India (35+)'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${citySearchOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Quick All-India Zoom Out Button */}
+            <button
+              type="button"
+              onClick={handleZoomAllIndia}
+              title="Zoom out to view all cities across India"
+              className="px-3 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 text-xs font-bold shadow-xl backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95"
+            >
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">All India</span>
+            </button>
+          </div>
+
           {/* Search Input */}
           <form onSubmit={handleSearch} className="relative">
             <input 
@@ -451,7 +569,7 @@ export const MapScreen: React.FC = () => {
               placeholder="Search corridor, sensor, area..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-56 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-900/90 text-white placeholder-slate-400 border border-slate-700/80 shadow-xl backdrop-blur-md focus:outline-none focus:border-sky-500"
+              className="w-52 sm:w-60 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-900/90 text-white placeholder-slate-400 border border-slate-700/80 shadow-xl backdrop-blur-md focus:outline-none focus:border-sky-500"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </form>
@@ -617,6 +735,132 @@ export const MapScreen: React.FC = () => {
 
       {/* Main Map Canvas */}
       <div ref={mapContainerRef} className="h-full w-full z-10" />
+
+      {/* Indian Cities Quick Selection Modal */}
+      {citySearchOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm pointer-events-auto">
+          <div className="w-full max-w-2xl bg-slate-950/95 border border-slate-800 shadow-2xl rounded-3xl p-5 sm:p-6 space-y-4 max-h-[82vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">🇮🇳</span>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Indian Cities Live AQI Explorer</span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">
+                      {INDIA_CITIES.length} Cities
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Select any city to fly directly to its coordinates and inspect the exact live point</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCitySearchOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search Input inside modal */}
+            <div className="relative">
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search city, state or union territory (e.g. Mumbai, Bengaluru, Delhi, Kochi, Jaipur...)"
+                value={cityQuery}
+                onChange={e => setCityQuery(e.target.value)}
+                className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-inner"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              {cityQuery && (
+                <button 
+                  onClick={() => setCityQuery('')} 
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Region Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 pb-1">
+              <span className="text-xs text-slate-400 font-semibold mr-1">Region:</span>
+              {(['All', 'North', 'South', 'East', 'West', 'Central', 'Northeast', 'Islands'] as const).map(reg => (
+                <button
+                  key={reg}
+                  onClick={() => setCityRegionFilter(reg)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    cityRegionFilter === reg
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {reg}
+                </button>
+              ))}
+            </div>
+
+            {/* City Cards Grid */}
+            <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {filteredCities.map(city => {
+                const aqi = getAqiCategory(city.aqi);
+                const isSelected = selectedCityId === city.id;
+                return (
+                  <button
+                    key={city.id}
+                    onClick={() => handleSelectCity(city)}
+                    className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all hover:scale-[1.01] active:scale-95 group ${
+                      isSelected
+                        ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/50'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/80'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">{city.name}</span>
+                        <span className="text-[10px] text-slate-400">({city.region})</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate max-w-[190px]">{city.state}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[190px]">{city.stationName}</p>
+                    </div>
+
+                    <div className="text-right shrink-0 ml-2">
+                      <div 
+                        className="px-2.5 py-1 rounded-full text-xs font-black text-white shadow-md inline-block"
+                        style={{ backgroundColor: aqi.color }}
+                      >
+                        AQI {city.aqi}
+                      </div>
+                      <span className={`block text-[10px] font-bold mt-0.5 ${aqi.textColor}`}>{aqi.label}</span>
+                    </div>
+                  </button>
+                );
+              })}
+
+              {filteredCities.length === 0 && (
+                <div className="col-span-2 text-center py-8 text-slate-400 text-sm">
+                  No cities found matching "{cityQuery}". Try another name.
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions Footer */}
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span>Tip: Click any city point on the map to inspect its real-time telemetry</span>
+              <button
+                onClick={() => {
+                  handleZoomAllIndia();
+                  setCitySearchOpen(false);
+                }}
+                className="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Show Whole India Map</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feature 1: Clean Air Navigation Drawer */}
       {showNavigation && (

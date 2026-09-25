@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { SensorReading, CitizenReport, HotspotCluster, WaterSoilSpot, ReportStatus } from '../types';
 import { INITIAL_SENSORS, INITIAL_REPORTS, INITIAL_HOTSPOTS, INITIAL_WATER_SOIL } from '../data/mockData';
+import { ALL_INDIA_SENSORS } from '../data/indiaCities';
 
 interface AppContextType {
   activeTab: 'home' | 'map' | 'report' | 'authority' | 'simulator';
@@ -49,7 +50,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [sensors, setSensors] = useState<SensorReading[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SENSORS);
-    return saved ? JSON.parse(saved) : INITIAL_SENSORS;
+    if (!saved) return INITIAL_SENSORS;
+    try {
+      const parsed: SensorReading[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map(s => s.id));
+      const missing = ALL_INDIA_SENSORS.filter(s => !existingIds.has(s.id));
+      return [...parsed, ...missing];
+    } catch {
+      return INITIAL_SENSORS;
+    }
   });
 
   const [hotspots, setHotspots] = useState<HotspotCluster[]>(() => {
